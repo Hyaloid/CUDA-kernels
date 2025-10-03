@@ -16,6 +16,10 @@ torch::Tensor online_softmax(
     const torch::Tensor& input
 );
 
+torch::Tensor online_softmax_optimized(
+    const torch::Tensor& input
+);
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.def(
         "naive_softmax",
@@ -39,5 +43,11 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
         "online_softmax",
         &online_softmax,
         "Implementation of online_softmax."
+    );
+
+    m.def(
+        "online_softmax_optimized",
+        &online_softmax_optimized,
+        "Implementation of online_softmax_optimized."
     );
 }
