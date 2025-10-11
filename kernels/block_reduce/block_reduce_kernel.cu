@@ -1,5 +1,4 @@
 #include <torch/extension.h>
-#include <cuda_runtime.h>
 #include <ATen/cuda/CUDAContext.h>
 #include <cooperative_groups.h>
 
@@ -13,6 +12,7 @@ __global__
 void inclusivePrefixSumKernel(const T* input, T* output, int n) {
     namespace cg = cooperative_groups;
     auto block = cg::this_thread_block();
+    
     int offset = blockIdx.x * blockDim.x;
     int tid = threadIdx.x;
     int block_len = min(n - offset, blockDim.x);
@@ -42,6 +42,7 @@ void inclusivePrefixSumKernel(const T* input, T* output, int n) {
         }
         __syncthreads();
     }
+
     // block sync
     block.sync();
     if (tid < gridDim.x) {

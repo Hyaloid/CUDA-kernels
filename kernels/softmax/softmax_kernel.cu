@@ -2,12 +2,13 @@
 #include <ATen/cuda/CUDAContext.h>
 
 constexpr int WARP_SIZE = 32;
+constexpr unsigned MASK = 0xFFFFFFFF;
 
 template <typename T>
 __device__ __forceinline__
 T warpReduceSum(T val) {
     for (int offset = WARP_SIZE >> 1; offset > 0; offset >>= 1) {
-        val += __shfl_xor_sync(0xFFFFFFFF, val, offset, WARP_SIZE);
+        val += __shfl_xor_sync(MASK, val, offset, WARP_SIZE);
     }
     return val;
 }
@@ -16,7 +17,7 @@ template <typename T>
 __device__ __forceinline__
 T warpReduceMax(T val) {
     for (int offset = WARP_SIZE >> 1; offset > 0; offset >>= 1) {
-        val = max(val, __shfl_xor_sync(0xFFFFFFFF, val, offset, WARP_SIZE));
+        val = max(val, __shfl_xor_sync(MASK, val, offset, WARP_SIZE));
     }
     return val;
 }
@@ -243,10 +244,21 @@ void onlineSoftmaxOptimizedKernel(
         for (int dim_idx = laneid; dim_idx < head_size; dim_idx += WARP_SIZE) {
             float input_val = input_ptr[idx + dim_idx * stride_d];
             row_max = fmaxf(row_max, input_val);
-            row_max = warpReduceMax(row_max);
             row_sum = row_sum * __expf(last_row_max - row_max) + __expf(input_val - row_max);
-            row_sum = warpReduceSum(row_sum);
             last_row_max = row_max;
+        }
+
+        float cur_max = -FLT_MAX;
+        float cur_sum = 0.0f;
+        for (int offset = WARP_SIZE >> 1; offset > 0; offset >>= 1) {
+            cur_max = __shfl_xor_sync(MASK, row_max, offset);
+            cur_sum = __shfl_xor_sync(MASK, row_sum, offset);
+            if (cur_max > row_max) {
+                row_sum = row_sum * __expf(row_max - cur_max) + cur_sum;
+                row_max = cur_max;
+            } else {
+                row_sum = row_sum + cur_sum * __expf(cur_max - row_max);
+            }
         }
 
         for (int dim_idx = laneid; dim_idx < head_size; dim_idx += WARP_SIZE) {
