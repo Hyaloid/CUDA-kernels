@@ -1,5 +1,4 @@
-#include <torch/extension.h>
-#include <ATen/cuda/CUDAContext.h>
+#include "template_utils.h"
 
 #define GET_STRIDES(tensor, prefix) \
     const int prefix##_stride_b = tensor.stride(0); \
@@ -8,33 +7,6 @@
     const int prefix##_stride_d = tensor.stride(3);
 
 constexpr int WARP_SIZE = 32;
-
-template <typename T>
-__device__ __forceinline__
-T type_add(T a, T b) {
-    return a + b;
-}
-
-template <>
-__device__ __forceinline__
-__half type_add<__half>(__half a, __half b) {
-    return __hadd(a, b);
-}
-
-template <typename T>
-struct CudaEquivalent {
-    using type = T;
-};
-
-template <>
-struct CudaEquivalent<c10::Half> {
-    using type = __half;
-};
-
-template <>
-struct CudaEquivalent<c10::BFloat16> {
-    using type = __nv_bfloat16;
-};
 
 template <typename T>
 __global__
