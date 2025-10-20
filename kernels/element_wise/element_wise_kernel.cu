@@ -116,7 +116,7 @@ torch::Tensor element_wise_add(
         at::ScalarType::Half,
         at::ScalarType::BFloat16,
         input_a.scalar_type(),
-        "",
+        "Element Wise Add.",
         [&] {
             elementWiseAddKernel<<<grid, block, 0, stream>>>(
                 input_a.data_ptr<scalar_t>(),
