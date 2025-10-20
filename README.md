@@ -5,7 +5,10 @@ The goal is to provide simple and easy-to-understand implementations for referen
 
 ## Supported Kernels
 
-- **Inclusive Prefix Sum**  
+- **Element Wise Add**
+- **Inclusive Prefix Sum**
 - **Softmax**
+- **ReLu**
+- **Sgemm**
 
 This list will be continuously updated as more kernels are added.
