@@ -1,5 +1,3 @@
-import sys
-
 from block_reduce import (
     inclusive_prefix_sum
 )

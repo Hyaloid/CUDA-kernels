@@ -12,3 +12,15 @@ The goal is to provide simple and easy-to-understand implementations for referen
 - **Sgemm**
 
 This list will be continuously updated as more kernels are added.
+
+## Usage
+
+```
+cd CUDA-KERNELS
+pip install -e .
+
+cd kernels/$KERNEL_FOLDER
+python setup.py install
+
+python test.py
+```
